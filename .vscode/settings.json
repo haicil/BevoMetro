@@ -1,0 +1,9 @@
+{
+    "idf.espIdfPathWin": "C:\\Users\\haici\\esp\\v5.0.8\\esp-idf",
+    "idf.toolsPathWin": "C:\\Users\\haici\\.espressif",
+    "idf.pythonInstallPath": "C:\\Users\\haici\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+    "idf.flashType": "UART",
+    "idf.portWin": "COM3",
+    "QTRSensors.h": "C:\\Users\\haici\\BevoMetro\\esp-idf-template\\qtr-sensors-arduino\\QTRSensors.h",
+    "cmake.sourceDirectory": "C:/Users/haici/BevoMetro/esp-idf-template"
+}
