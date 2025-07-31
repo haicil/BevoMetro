@@ -1,7 +1,6 @@
 #include "sdkconfig.h"
 #include <QTRSensors.h>
 #include <NewPing.h>
-#include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
 #define motor_ground_1 14
@@ -13,12 +12,14 @@
 #define red 27
 #define blue 32
 #define green 33
-#define buzzer 23
+#define RXD2 16
+#define TXD2 17
 
 NewPing sonar_1(5, 25, 200);
 NewPing sonar_2(4, 26, 200);
 QTRSensors qtr;
 uint16_t sensors[4];
+DFRobotDFPlayerMini myDFPlayer;
 
 int ping_1 = 0;
 int ping_2 = 0;
@@ -26,8 +27,8 @@ int light_flash_time = 0;
 // int next_stop = 1; // Jester Circle, 21st St, 23rd St, Dean Keeton St, 24th St, 22nd St
 int stop_time = 0;
 int status = 0;
-// bool playing_audio = false;
-// int current_audio_num = 0;
+bool playing_audio = false;
+int current_audio_num = 0;
 int min_black_val = 40;
 int max_white_val = 40;
 bool super_left = false;
@@ -37,10 +38,15 @@ int right_turn = 1;
 int count = 0;
 int supTurnDelay = 0;
 //motor power
-int power = 150;
+int power = 255;
 int partialPower = -power;
 int superPow = -power;
 int buffer = 0;
+String line;
+char command;
+int pause = 0;
+int repeat = 0;
+
 
 void rightMotor(int speed){
     if(speed >= 0){
@@ -178,24 +184,27 @@ void drive() {
 }
 
 void senseSonar() {
-  if (ping_1 < 10 && ping_1 != 0) { // && ping_1 != 0
-    // if (status != 1) {
-    //   playing_audio = false;
-    // }
+  if (ping_1 < 10 && ping_1 != 0) {
+    if (status != 1) {
+      playing_audio = false;
+    }
     status = 1;
   }
-  else if ((status == 2 || (ping_2 < 10 && ping_2 != 0)) && stop_time < 3000) {
-    // if (status != 2) {
-    //   playing_audio = false;
-    //   current_audio_num = (current_audio_num + 1) % 2;
-    // }
+  else if ((status == 2 || (ping_2 < 10 && ping_2 != 0)) && stop_time < 6000) {
+    if (status != 2) {
+      playing_audio = false;
+      current_audio_num = (current_audio_num + 1) % 3;
+      if (current_audio_num == 0) {
+        current_audio_num++;
+      }
+    }
     status = 2;
   }
   else {
-    if (status == 2) {
+    else if (status == 2) {
       buffer = true;
     }
-    if (stop_time == 5000) {
+    if (stop_time == 8000) {
       stop_time = 0;
       buffer = false;
     }
@@ -269,10 +278,23 @@ void setup()
   pinMode(red, OUTPUT);
   pinMode(blue, OUTPUT);
   pinMode(green, OUTPUT);
-  pinMode(buzzer, OUTPUT);
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]) {36, 39, 34, 35}, 4); 
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
   Serial.begin(115200);
+  if (!myDFPlayer.begin(Serial2)) {// Start communication with DFPlayer
+  // myDFPlayer.begin(Serial1, true, false); // Start communication with DFPlayer
+    Serial.println("ERROR");
+  }
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+  delay(1000); // Add this to allow player to fully initialise
+
+  myDFPlayer.volume(15);  //Set volume value. From 0 to 30
+
+  Serial.println("setup ended"); // I like this reassurance
   delay(5000);
   analogWrite(red, 255);
   analogWrite(blue, 255);
@@ -290,7 +312,7 @@ void setup()
             superTurn(leftTurn);
         {
           */
-  }
+}
 analogWrite(red, 0);
 analogWrite(blue, 0);
 analogWrite(green, 255);
@@ -303,10 +325,10 @@ void loop()
   ping_1 = sonar_1.ping_cm();
   ping_2 = sonar_2.ping_cm();
   delayMicroseconds(10);
-  Serial.print("ping 1 ");
-  Serial.println(ping_1);
-  Serial.print("ping 2 ");
-  Serial.println(ping_2);
+  //Serial.print("ping 1 ");
+  //Serial.println(ping_1);
+  //Serial.print("ping 2 ");
+  //Serial.println(ping_2);
   senseSonar();
   switch (status) {
     case 1:
@@ -315,13 +337,13 @@ void loop()
       analogWrite(red, 255);
       analogWrite(blue, 0);
       analogWrite(green, 0);
-      digitalWrite(buzzer, HIGH);
+      if (!playing_audio) {
+        myDFPlayer.play(3);
+        myDFPlayer.enableLoop();
+        Serial.println("blocked audio playing");
+        playing_audio = true;
+      }
       delay(500);
-      // if (!playing_audio) {
-      //   myDFPlayer.playFolder(1, 2);
-      //   myDFPlayer.enableLoop();
-      //   Serial.println("blocked audio playing");
-      // }
       break;
     case 2:
       //Serial.println("stopped");
@@ -330,15 +352,16 @@ void loop()
       analogWrite(red, 0);
       analogWrite(blue, 0);
       analogWrite(green, 255);
-      // if (!playing_audio) {
-      //   myDFPlayer.playFolder(1, current_audio_num);
-      //   Serial.println("stopped audio playing");
-      //   playing_audio = true;
-      // }
+      if (!playing_audio) {
+        myDFPlayer.play(current_audio_num);
+        Serial.println("stopped audio playing");
+        playing_audio = true;
+      }
       stop_time += 10;
       break;
     default:
-      digitalWrite(buzzer, LOW);
+      myDFPlayer.pause();
+      myDFPlayer.disableLoop();
       drive();
       moveFlash();
       break;

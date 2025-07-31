@@ -1,5 +1,5 @@
 #define play_pause 18
-#define previous 19
+#define previous 17
 #define next 23
 
 int wat = 175;
@@ -15,37 +15,18 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-    delay(3000);
-    digitalWrite(previous, HIGH);
+    Serial.println("next");
+    digitalWrite(next, LOW);
     delay(100);
-    digitalWrite(previous, LOW); 
-    Serial.println("previous");
-    delay(3000);
-    digitalWrite(previous, HIGH);
-    delay(100);
-    digitalWrite(previous, LOW); 
-    Serial.println("previous");
-    delay(3000);
-    digitalWrite(previous, HIGH);
-    delay(100);
-    digitalWrite(previous, LOW); 
-    Serial.println("previous");
-    delay(3000);
     digitalWrite(next, HIGH);
     delay(100);
-    digitalWrite(next, LOW); 
-    Serial.println("next");
-    delay(3000);
+    digitalWrite(next, LOW);
+    delay(10000);
     digitalWrite(next, HIGH);
-    delay(100);
-    digitalWrite(next, LOW); 
-    Serial.println("next");
-    delay(3000);
+    Serial.println("previous");
+    digitalWrite(previous, LOW);
+    delay(10000);
     digitalWrite(next, HIGH);
-    delay(100);
-    digitalWrite(next, LOW); 
-    Serial.println("next");
-    delay(3000);
-  
+    delay(1000);
 
 }
